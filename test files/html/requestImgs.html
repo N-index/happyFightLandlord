@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>使用async/await加载图片</title>
+    <style>
+      img {
+        width: 200px;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="img-container"></div>
+    <script>
+      const imgContainer = document.querySelector('#img-container');
+      const createImage = function (imgPath) {
+        return new Promise(function (resolve, reject) {
+          const img = document.createElement('img');
+          img.src = imgPath;
+          img.addEventListener('load', function () {
+            imgContainer.append(img);
+            resolve(img);
+          });
+          img.addEventListener('error', function () {
+            reject(new Error('Image not found!'));
+          });
+        });
+      };
+      const loadAll = async function (imgPathArray) {
+        const imgs = imgPathArray.map(imgPath => createImage(imgPath));
+        const imgEl = await Promise.all(imgs);
+        console.log(imgEl);
+      };
+      console.log('主线程开始！');
+      loadAll(['1.jpg', '2.jpg', '3.jpg']);
+
+      console.log('其他的任务不应该被加载图片的函数block');
+    </script>
+  </body>
+</html>

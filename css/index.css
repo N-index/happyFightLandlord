@@ -1,0 +1,305 @@
+*,
+*::before,
+*::after {
+  padding: 0;
+  margin: 0;
+  box-sizing: inherit;
+  transition: all 0.2s;
+  user-select: none;
+}
+:root {
+  box-sizing: border-box;
+}
+#app {
+}
+#welcome {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #00dbde;
+  color: #ddd;
+
+  background-image: linear-gradient(90deg, #00dade8f 0%, #fb00ffb4 100%),
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url(../asset/image/bg.png);
+  background-size: cover;
+  background-position: center;
+}
+.clock {
+  width: 150px;
+  height: 150px;
+  /* overflow: hidden; */
+  z-index: 9999;
+  position: absolute;
+  transition: all 0.5s ease;
+  left: auto;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  backdrop-filter: blur(3px) brightness(1.05);
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+  filter: drop-shadow(8px 10px 15px #080c0c);
+
+  border-radius: 50%;
+  background-image: conic-gradient(
+    rgba(255, 0, 0, 0.493),
+    hsla(315, 100%, 50%, 0.493),
+    hsla(270, 100%, 50%, 0.432),
+    hsla(225, 100%, 50%, 0.507),
+    hsla(180, 100%, 50%, 0.418),
+    hsla(135, 100%, 50%, 0.452),
+    hsla(90, 100%, 50%, 0.432),
+    hsla(45, 100%, 50%, 0.445),
+    hsla(0, 100%, 50%, 0.473)
+  );
+  color: white;
+}
+
+.clock--left {
+  left: 20%;
+  top: 20%;
+  right: auto;
+  bottom: auto;
+}
+.clock--right {
+  right: 20%;
+  top: 20%;
+
+  left: auto;
+  bottom: auto;
+}
+.clock--myself {
+  top: 50%;
+  left: 50%;
+
+  right: auto;
+  bottom: auto;
+}
+
+button {
+  display: inline-block;
+  margin-top: 25px;
+  padding: 25px;
+  border-radius: 15px;
+  font-size: 22px;
+  box-shadow: 20px 2rem 4rem 3px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s;
+  cursor: pointer;
+  color: rgb(71, 62, 62);
+  border: none;
+}
+button:focus,
+button:hover {
+  /* box-shadow: 15px 10px 30px #ebf1f5, -20px -20px 60px #a9daec; */
+}
+button:active {
+  transform: translateY(3px);
+}
+.controls {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  transform: translate(-50%, -50%);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+}
+.controls > * {
+  margin: 10px;
+}
+.stage {
+  background-color: #00dbde;
+  background-image: linear-gradient(90deg, #00dbde 0%, #fc00ff 100%);
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 60% 40%;
+  grid-template-columns: minmax(min-content, 1fr) 1fr minmax(min-content, 1fr);
+}
+
+.center {
+  position: relative;
+
+  /* background-color: hotpink; */
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.4),
+      rgba(255, 255, 255, 0.4)
+    ),
+    url(http://placeimg.com/640/480/abstract);
+  background-size: cover;
+  background-position: center;
+}
+.center__cards {
+  display: flex;
+  position: absolute;
+  top: 15px;
+  left: 15px;
+}
+
+.center__info {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  min-width: max-content;
+  transform: translate(-50%, -50%);
+  background-color: brown;
+  padding: 15px;
+  border-radius: 15px;
+  color: cornsilk;
+  /* background-color: black; */
+}
+
+.user {
+  background-image: linear-gradient(135deg, #fdeb71 10%, #f8d800 100%);
+  padding: 18px;
+  font-size: 22px;
+}
+.user--1,
+.user--2 {
+  display: flex;
+  flex-direction: column;
+}
+.user--3 {
+  grid-column: 1/-1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.user--3 {
+  grid-column: 1/-1;
+  align-self: end;
+}
+.user--1 .user-info,
+.user--2 .user-info {
+  transform-origin: left top;
+  transform: scale(0.8);
+}
+.user-info {
+  /* width: 50%; */
+  /* overflow: hidden; */
+  color: #ddd;
+  background-color: indigo;
+  border-radius: 15px;
+  padding: 15px;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
+
+  display: grid;
+  grid-template-rows: repeat(2, min-content);
+  grid-template-columns: min-content max-content;
+  grid-row-gap: 8px;
+  grid-column-gap: 15px;
+}
+.user-info__avatar {
+  height: 85px;
+  width: 85px;
+  border-radius: 50%;
+  object-position: bottom;
+  object-fit: cover;
+  border: 5px #fff solid;
+  grid-row: 1 / -1;
+  align-self: center;
+}
+.user-info__username {
+  align-self: center;
+}
+.user-info__score {
+  grid-column: -2/-1;
+  align-self: end;
+}
+.user--3 .user-info__avatar {
+  animation: myselfAvatarRotate 3s linear infinite;
+}
+.user--1 .user-card,
+.user--2 .user-card {
+  display: flex;
+  flex-wrap: wrap;
+}
+.user--3 .user-card {
+  height: 80%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-left: 25px;
+}
+.card {
+  background-color: rgb(248, 248, 248);
+  border-radius: 6px;
+  width: 65px;
+  height: 100px;
+  border: solid 2px #623aa2;
+  padding-left: 5px;
+  padding-top: 3px;
+  user-select: none;
+  position: relative;
+  display: inline-block;
+}
+.card--u1,
+.card--u2 {
+  background-image: url(../asset/image/card-backface.webp);
+  width: 65px;
+  height: 100px;
+  overflow: hidden;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transform-origin: left top;
+  transform: scale(0.45);
+  /* 注意对家的卡牌数字完全公开，只是颜色设成了透明 */
+  color: transparent !important;
+}
+.card--u1::before,
+.card--u2::before {
+  color: transparent !important;
+}
+.card--u1:not(:first-child),
+.card--u2:not(:first-child) {
+  margin-left: -50px;
+}
+.card--u3 {
+  width: 65px;
+  height: 115px;
+  /* box-shadow: 0 0.8rem 2.5rem rgba(0, 0, 0, 0.45); */
+}
+.card--u3:not(:first-child) {
+  margin-left: -10px;
+}
+.card--u3--selecting {
+  background: #ccc;
+}
+.card--u3--selected {
+  transform: translateY(-20px);
+  box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.4);
+}
+
+.card--lord {
+  width: 65px;
+  height: 65px;
+  transform-origin: left top;
+  transform: scale(0.75);
+  flex-basis: 20%;
+}
+.card--lord::before {
+  font-size: 10px !important;
+}
+.card--desktop {
+  transform: scale(0.8);
+  background-color: cornsilk;
+  color: rgb(16, 44, 44);
+  margin-left: -35px;
+}
+
+@keyframes myselfAvatarRotate {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,60 @@
+.card-3::before {
+  content: '3';
+}
+.card-4::before {
+  content: '4';
+}
+.card-5::before {
+  content: '5';
+}
+.card-6::before {
+  content: '6';
+}
+.card-7::before {
+  content: '7';
+}
+.card-8::before {
+  content: '8';
+}
+.card-9::before {
+  content: '9';
+}
+.card-10::before {
+  content: '10';
+}
+.card-11::before {
+  content: 'J';
+}
+.card-12::before {
+  content: 'Q';
+}
+.card-13::before {
+  content: 'K';
+}
+.card-14::before {
+  content: 'A';
+}
+.card-80::before {
+  content: '2';
+}
+.card-99 {
+  writing-mode: vertical-lr;
+  text-orientation: upright;
+  background-color: rgb(186, 184, 221);
+}
+.card-99::before {
+  content: 'JOKER';
+  font-size: 18px;
+  color: aliceblue;
+}
+.card-100 {
+  writing-mode: vertical-lr;
+  text-orientation: upright;
+  background-color: rgb(189, 75, 75);
+}
+.card-100::before {
+  content: 'JOKER';
+  font-size: 18px;
+
+  color: aliceblue;
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>测试 localStorage</title>
+  </head>
+  <body>
+    <div id="app">
+      <input type="text" v-model="inputContent" @keyup.enter="insertItem" />
+      <ul>
+        <li v-for="todo in todos">{{todo}}</li>
+      </ul>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script>
+      const app = new Vue({
+        el: '#app',
+        data() {
+          return {
+            todos: [],
+            inputContent: '',
+          };
+        },
+        created() {
+          for (let i = 0; i < localStorage.length; i++) {
+            this.todos.push(localStorage.getItem(`todo-${i + 1}`));
+          }
+        },
+        methods: {
+          insertItem() {
+            const content = this.inputContent;
+            this.todos.push(content);
+            localStorage.setItem(`todo-${localStorage.length + 1}`, content);
+            this.inputContent = '';
+          },
+        },
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="./favicon.ico" type="image/icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <title>欢乐斗地主-桌面版</title>
+    <link rel="stylesheet" href="index.css" />
+    <link rel="stylesheet" href="card-number.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="welcome" v-if="displayStatus.welcome">
+        <h1>欢乐斗地主，欢迎您的到来！{{ username }}</h1>
+        <button @click="enterStage">点击开始游戏</button>
+      </div>
+
+      <div class="controls" v-show="displayStatus.controls">
+        <button @click="startGame" v-if="displayStatus.deliver">
+          开始发牌！
+        </button>
+        <button
+          id="snatch-btn"
+          ref="snatch-btn"
+          v-show="displayStatus.grabLordland"
+        >
+          抢地主！
+        </button>
+        <button
+          id="not-snatch-btn"
+          ref="not-snatch-btn"
+          v-show="displayStatus.grabLordland"
+        >
+          不抢
+        </button>
+        <button
+          @click="putUpCards"
+          ref="put-up-btn"
+          v-show="displayStatus.putUpCards"
+        >
+          出牌
+        </button>
+        <button
+          @click="notPutUpCards"
+          ref="not-put-up-btn"
+          v-show="displayStatus.putUpCards"
+        >
+          不出
+        </button>
+        <audio controls autoplay style="display: none">
+          <source src="./bg.mp3" type="audio/mpeg" />
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+
+      <div v-if="displayStatus.stage" class="stage">
+        <div class="user user--1">
+          <div class="user-info">
+            <img
+              src="http://placeimg.com/640/480/business"
+              alt=""
+              class="user-info__avatar"
+            />
+
+            <div class="user-info__username">Zelda Carroll</div>
+            <div class="user-info__score">当前积分：5000</div>
+          </div>
+          <div class="user-card">
+            <div
+              v-for="itemCard in firstUserCardsBindedView"
+              class="card card--u1"
+              :class="'card-' + itemCard"
+            ></div>
+          </div>
+        </div>
+        <div class="center">
+          <div class="center__cards">
+            <!--  地主牌 -->
+            <div
+              v-for="itemCard in landLordCardsShuffled"
+              class="card card--lord"
+              :class="'card-' + itemCard"
+            ></div>
+          </div>
+          <div class="center__info">
+            <div
+              v-for="itemCard in desktopCardsInfo.cards"
+              class="card card--desktop"
+              :class="'card-' + itemCard"
+            ></div>
+            <span>
+              currentTurnIndex:{{currentTurnIndex}} <br />
+              现在轮到第{{currentTurnIndex%3+1}}位玩家<br />
+              player名字是{{player[currentTurnIndex%3]}} <br />
+              剩余计时：{{countdownNumber.grab}} <br />
+              抢地主状态：{{ grabRecord }}
+            </span>
+          </div>
+        </div>
+        <div class="user user--2">
+          <div class="user-info">
+            <img
+              src="http://placeimg.com/640/480/people"
+              alt=""
+              class="user-info__avatar"
+            />
+
+            <div class="user-info__username">Gregory Keebler</div>
+            <div class="user-info__score">当前积分：12000</div>
+          </div>
+          <div class="user-card">
+            <div
+              v-for="itemCard in secondUserCardsBindedView"
+              class="card card--u2"
+            ></div>
+          </div>
+        </div>
+        <div class="user user--3">
+          <div class="user-info">
+            <img
+              src="http://placeimg.com/640/480/animals"
+              alt=""
+              class="user-info__avatar"
+            />
+
+            <div class="user-info__username">Richie Wiza</div>
+            <div class="user-info__score">当前积分：48000</div>
+          </div>
+          <div class="user-card">
+            <!-- 每张牌都绑定点击事件？没有委托？性能怎么样，VUE是怎么处理的？ -->
+            <div
+              v-for="(item,index) in myselfUserCardsBindedView"
+              :class="['card card--u3', {['card-'+item.number]:true,'card--u3--selected':item.isSelected,'card--u3--selecting':item.isSelecting}]"
+              @mousedown="mousedownHandler(index,item)"
+              @mouseup="mouseupHandler(index,item)"
+              @mouseenter="mouseenterHandler(index,item)"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script type="module" src="./allCardNumbers.js"></script>
+    <script type="module">
+      import { allCardNumbers } from './allCardNumbers.js';
+      import {
+        cardsRules,
+        getCardsTypeAndMainItems,
+        isBiggerThanDesktopCards,
+      } from './cardRules.js';
+
+      const waiting = function (duration) {
+        return new Promise(resolve => {
+          setTimeout(resolve, duration * 1000);
+        });
+      };
+      const moveOldArrToNewArr = async function (
+        oldArr,
+        newArr,
+        identifier,
+        duration
+      ) {
+        let len = oldArr.length;
+        for (let i = 0; i < len; i++) {
+          await waiting(duration);
+          // 对不起，这本来是一个通用的工具类函数，但是为了在其他地方改会有点麻烦，所以就为myself定制化一下吧。。
+          newArr.push(
+            identifier == 'myself'
+              ? { number: oldArr[i], isSelected: false, isSelecting: false }
+              : oldArr[i]
+          );
+        }
+        return identifier;
+      };
+
+      const app = new Vue({
+        el: '#app',
+        data: {
+          username: 'Joker!',
+          shuffledCards: [],
+
+          landLordCardsShuffled: [],
+          firstUserCardsShuffled: [],
+          secondUserCardsShuffled: [],
+          myselfUserCardsShuffled: [],
+
+          firstUserCardsBindedView: [],
+          secondUserCardsBindedView: [],
+          myselfUserCardsBindedView: [],
+
+          player: ['user-left', 'myself', 'user-right'],
+          grabRecord: [false, false, false],
+          currentTurnIndex: 1,
+
+          countdownNumber: {
+            grab: 8,
+            putup: 15,
+          },
+
+          desktopCardsInfo: {
+            cards: [],
+            type: {},
+            mainItems: [],
+          },
+          displayStatus: {
+            welcome: true,
+            stage: false,
+            controls: false,
+            deliver: true,
+            grabLordland: false,
+            putUpCards: false,
+          },
+          gameStatus: [
+            'beforeBeginning',
+            'afterBeginning',
+            'beforeGrabLordland',
+            'afterGrabLordland',
+            'waitingForLordland',
+            'waitingForNextUser',
+            'waitingForNextNextUser',
+          ],
+          cardsSelectionInfo: {
+            startIndex: 0,
+            endIndex: 0,
+            isStartSelecting: false,
+          },
+          // currentGameStatus: gameStatus[0],
+        },
+
+        methods: {
+          enterStage() {
+            // 按钮和舞台显隐
+            this.displayStatus.welcome = false;
+            this.displayStatus.controls = true;
+            this.displayStatus.stage = true;
+          },
+          startGame() {
+            // 按钮显隐
+            this.displayStatus.controls = false;
+            this.displayStatus.deliver = false;
+
+            // 重置场上的牌和 player 的牌
+            this.desktopCardsInfo = {
+              cards: [],
+              type: {},
+              mainItems: [],
+            };
+            this.myselfUserCardsBindedView = [];
+            this.firstUserCardsBindedView = [];
+            this.secondUserCardsBindedView = [];
+
+            // 洗牌、理牌、发牌
+            this.shuffle();
+          },
+          shuffle() {
+            // 洗牌
+            this.shuffledCards = allCardNumbers;
+            for (let i = this.shuffledCards.length - 1; i > 0; i--) {
+              // 从 [0,a] 中选择一个跟 a 交换
+              const j = Math.floor(Math.random() * (i + 1));
+              [this.shuffledCards[j], this.shuffledCards[i]] = [
+                this.shuffledCards[i],
+                this.shuffledCards[j],
+              ];
+            }
+            // 逻辑发牌
+            this.firstUserCardsShuffled = this.shuffledCards.slice(0, 17);
+            this.secondUserCardsShuffled = this.shuffledCards.slice(17, 34);
+            this.myselfUserCardsShuffled = this.shuffledCards.slice(34, -3);
+            this.landLordCardsShuffled = this.shuffledCards.slice(-3);
+
+            // 理牌
+            this.firstUserCardsShuffled.sort((a, b) => b - a);
+            this.secondUserCardsShuffled.sort((a, b) => b - a);
+            this.myselfUserCardsShuffled.sort((a, b) => b - a);
+
+            // 视图发牌
+            this.allDelivered();
+          },
+          //箭头函数中this会混乱，所以没用箭头
+          allDelivered: async function () {
+            let allRes = await Promise.all([
+              moveOldArrToNewArr(
+                this.firstUserCardsShuffled,
+                this.firstUserCardsBindedView,
+                'one',
+                0
+              ),
+              moveOldArrToNewArr(
+                this.secondUserCardsShuffled,
+                this.secondUserCardsBindedView,
+                'two',
+                0
+              ),
+              moveOldArrToNewArr(
+                this.myselfUserCardsShuffled,
+                this.myselfUserCardsBindedView,
+                'myself',
+                0.1
+              ),
+            ]).then(res => {
+              // 发牌完毕，开始抢地主
+              for (let i = 0; i < 3; i++) {}
+
+              this.startGrab();
+            });
+          },
+          startGrab: function () {
+            this.displayStatus.grabLordland = true;
+            this.displayStatus.controls = true;
+            // 视觉上的倒计时-倒计时数字
+            // BUG: turn 更新后，因为重复调用 startGrab,
+            // this.countdownNumber.grab 会被重复调用，数据不一致了。
+            // 数字倒计时异常
+            async function countdownFn() {
+              console.log('进入 countdown 函数');
+              while (this.countdownNumber.grab > 0) {
+                console.log(this.countdownNumber.grab);
+                await waiting(1);
+                this.countdownNumber.grab--;
+              }
+              console.log('countdown 函数结束了');
+            }
+            countdownFn.call(this);
+
+            // 逻辑上的倒计时-抢地主
+            const snatchElement = this.$refs['snatch-btn'];
+            const notSnatchElement = this.$refs['not-snatch-btn'];
+            (function (rejectTime, snatchElement, notSnatchElement) {
+              return new Promise(function (resolve, reject) {
+                snatchElement.addEventListener('click', () => {
+                  resolve('手动抢地主！');
+                });
+                notSnatchElement.addEventListener('click', () => {
+                  reject('手动不抢地主！');
+                });
+                setTimeout(
+                  reject,
+                  rejectTime * 1000,
+                  '五秒到了，自动不抢地主！'
+                );
+              });
+            })(this.countdownNumber.grab, snatchElement, notSnatchElement)
+              .then(res => {
+                // for (let i = 0; i < 3; i++) {
+                //   this.myselfUserCardsBindedView.push({
+                //     isSelected: true,
+                //     isSelecting: false,
+                //     number: this.landLordCardsShuffled[i],
+                //   });
+                // }
+                // this.myselfUserCardsBindedView.sort(
+                //   (a, b) => b.number - a.number
+                // );
+                this.grabRecord[this.currentTurnIndex % 3] = true;
+              })
+              .catch(() => {
+                // 不抢地主
+                this.grabRecord[this.currentTurnIndex % 3] = false;
+              })
+              .finally(() => {
+                // 抢地主后控制显隐
+                this.displayStatus.grabLordland = false;
+                this.displayStatus.putUpCards = true;
+
+                // 下一位 player
+                this.currentTurnIndex += 1;
+
+                // 重置抢地主的时间
+                this.countdownNumber.grab = 8;
+
+                // 开抢！
+                this.startGrab();
+              });
+          },
+          mousedownHandler(itemIndex, item) {
+            this.cardsSelectionInfo.isStartSelecting = true;
+            this.cardsSelectionInfo.startIndex = itemIndex;
+            this.cardsSelectionInfo.endIndex = itemIndex;
+            item.isSelecting = !item.isSelecting;
+          },
+          mouseupHandler(itemIndex, item) {
+            if (this.cardsSelectionInfo.isStartSelecting) {
+              this.cardsSelectionInfo.endIndex = itemIndex;
+              this.cardsSelectionInfo.isStartSelecting = false;
+
+              // 这里应该用 class 和特定的数据绑定来控制样式
+
+              // 找出所有处于 selecting 的元素，并
+              this.myselfUserCardsBindedView.forEach(
+                (myCardItem, index, array) => {
+                  if (myCardItem.isSelecting) {
+                    myCardItem.isSelecting = !myCardItem.isSelecting;
+                    myCardItem.isSelected = !myCardItem.isSelected;
+                  }
+                }
+              );
+            }
+          },
+          mouseenterHandler(itemIndex, item) {
+            if (this.cardsSelectionInfo.isStartSelecting) {
+              // 正向
+              if (
+                itemIndex > this.cardsSelectionInfo.endIndex &&
+                itemIndex >= this.cardsSelectionInfo.startIndex
+              ) {
+                this.cardsSelectionInfo.endIndex = itemIndex;
+                item.isSelecting = !item.isSelecting;
+              }
+              if (
+                itemIndex < this.cardsSelectionInfo.endIndex &&
+                itemIndex >= this.cardsSelectionInfo.startIndex
+              ) {
+                this.myselfUserCardsBindedView[
+                  itemIndex + 1
+                ].isSelecting = !this.myselfUserCardsBindedView[itemIndex + 1]
+                  .isSelecting;
+                this.cardsSelectionInfo.endIndex = itemIndex;
+              }
+              if (
+                itemIndex < this.cardsSelectionInfo.endIndex &&
+                itemIndex <= this.cardsSelectionInfo.startIndex
+              ) {
+                this.cardsSelectionInfo.endIndex = itemIndex;
+                item.isSelecting = !item.isSelecting;
+              }
+              if (
+                itemIndex > this.cardsSelectionInfo.endIndex &&
+                itemIndex <= this.cardsSelectionInfo.startIndex
+              ) {
+                this.myselfUserCardsBindedView[
+                  itemIndex - 1
+                ].isSelecting = !this.myselfUserCardsBindedView[itemIndex - 1]
+                  .isSelecting;
+
+                this.cardsSelectionInfo.endIndex = itemIndex;
+              }
+            }
+          },
+          putUpCards: function () {
+            const selectedCards = this.myselfUserCardsBindedView
+              .filter(item => item.isSelected)
+              .map(item => item.number);
+
+            const selectedCardsInfo = getCardsTypeAndMainItems(selectedCards);
+
+            if (selectedCardsInfo.type === cardsRules.INVALID) {
+              console.error('无效的牌');
+              return;
+            }
+
+            if (
+              !isBiggerThanDesktopCards(
+                selectedCardsInfo,
+                this.desktopCardsInfo
+              )
+            ) {
+              console.error('不符合规则');
+              return;
+            }
+
+            {
+              // 这个代码块里是应该是原子操作。应该加锁。相当于转账操作。
+              [
+                this.desktopCardsInfo.cards,
+                this.desktopCardsInfo.type,
+                this.desktopCardsInfo.mainItems,
+              ] = [
+                selectedCards,
+                selectedCardsInfo.type,
+                selectedCardsInfo.mainItems,
+              ];
+
+              // 出牌
+              // 方案1：把当前选中的牌全部删掉。
+              // 可能问题：在极端情况下选中的牌与要出的符合规则的牌不同。
+              // 解决方案：再判断一次选中牌与要出牌的一致性。不过暂时不考虑这点。
+              this.myselfUserCardsBindedView = this.myselfUserCardsBindedView.filter(
+                item => !item.isSelected
+              );
+              if (this.myselfUserCardsBindedView.length < 1) {
+                console.log('牌出完了，赢了！');
+              }
+            }
+          },
+          notPutUpCards() {
+            // 清场
+            this.desktopCardsInfo = {
+              cards: [],
+              type: {},
+              mainItems: [],
+            };
+            this.myselfUserCardsBindedView.forEach((myCardItem, index, arr) => {
+              if (myCardItem.isSelected) {
+                myCardItem.isSelected = false;
+              }
+            });
+
+            // 播放声音
+            // 按钮显隐
+          },
+        },
+      });
+    </script>
+  </body>
+</html>

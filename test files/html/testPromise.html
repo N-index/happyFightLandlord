@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>promise: resolve or reject in onclick or other event handler.</title>
+  </head>
+
+  <body>
+    <button>点击开始</button>
+    <hr />
+    <button>同意</button>
+    <button>拒绝</button>
+    结果：
+    <p></p>
+    <script>
+      let btns = document.querySelectorAll('button');
+      let start_btn = btns[0];
+      let resolve_btn = btns[1];
+      let reject_btn = btns[2];
+      start_btn.addEventListener('click', function () {
+        let promise = new Promise((resolve, reject) => {
+          resolve_btn.addEventListener('click', resolve);
+          reject_btn.addEventListener('click', reject);
+          setTimeout(reject, 3000);
+          console.log('3秒后自动reject');
+        })
+          .then(() => {
+            console.log('resolve!');
+          })
+          .catch(() => {
+            console.log('rejected!');
+          });
+      });
+    </script>
+  </body>
+</html>
