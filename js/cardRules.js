@@ -154,6 +154,44 @@ export const isBiggerThanDesktopCards = (
     );
   }
 };
+export const hasCardsBiggerThanDesktop = (playerCards, desktopCardsInfo) => {
+  function hasMatchType(desktopCardsInfo) {
+    if (desktopCardsInfo.type === cardsRules.SINGLE) {
+      let res = {};
+      for (let card of playerCards) {
+        res[card] = res[card] ? res[card] + 1 : 1;
+      }
+      console.log('hasCardsBiggerThanDesktop函数：');
+    }
+    if (desktopCardsInfo.type === cardsRules.DOUBLE) {
+    }
+    if (desktopCardsInfo.type === cardsRules.TRIPLE) {
+    }
+    if (desktopCardsInfo.type === cardsRules.NORMAL_BOMB) {
+    }
+    if (desktopCardsInfo.type === cardsRules.SINGLE_BELT) {
+    }
+    if (desktopCardsInfo.type === cardsRules.DOUBLE_BELT) {
+    }
+    if (desktopCardsInfo.type === cardsRules.TRIPLE_BELT) {
+    }
+    if (desktopCardsInfo.type === cardsRules.THREE_PULL_ONE) {
+    }
+    if (desktopCardsInfo.type === cardsRules.THREE_PULL_TWO) {
+    }
+    if (desktopCardsInfo.type === cardsRules.FOUR_PULL_TWO_SINGLE) {
+    }
+    if (desktopCardsInfo.type === cardsRules.FOUR_PULL_TWO_DOUBLE) {
+    }
+    if (desktopCardsInfo.type === cardsRules.AIRPLANE_PULL_SINGLE) {
+    }
+    if (desktopCardsInfo.type === cardsRules.AIRPLANE_PULL_DOUBLE) {
+    }
+    if (desktopCardsInfo.type === cardsRules.BIG_BOMB) {
+    }
+  }
+  console.log(desktopCardsInfo);
+};
 
 export const getCardsTypeAndMainItems = cards => {
   const fnAndType = [

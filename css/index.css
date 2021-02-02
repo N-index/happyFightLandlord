@@ -251,7 +251,7 @@ button:active {
   background-repeat: no-repeat;
   transform-origin: left top;
   transform: scale(0.45);
-  /* 注意对家的卡牌数字完全公开，只是颜色设成了透明 */
+  /* 注意：对家的卡牌数字完全公开，只是颜色设成了透明 */
   color: transparent !important;
 }
 .card--u1::before,
