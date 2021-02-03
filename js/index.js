@@ -215,12 +215,16 @@ const app = new Vue({
       this.firstUserCardsShuffled = this.shuffledCards.slice(0, 17);
       this.secondUserCardsShuffled = this.shuffledCards.slice(17, 34);
       this.myselfUserCardsShuffled = this.shuffledCards.slice(34, -3);
+
       this.landLordCardsShuffled = this.shuffledCards.slice(-3);
 
       // 理牌
       this.firstUserCardsShuffled.sort((a, b) => b - a);
       this.secondUserCardsShuffled.sort((a, b) => b - a);
       this.myselfUserCardsShuffled.sort((a, b) => b - a);
+      console.log(this.firstUserCardsShuffled);
+      console.log(this.secondUserCardsShuffled);
+      console.log(this.myselfUserCardsShuffled);
     },
     async deliverCardsToPlayers() {
       //箭头函数中this会混乱，所以没用箭头
@@ -229,19 +233,19 @@ const app = new Vue({
           this.firstUserCardsShuffled,
           this.firstUserCardsBindedView,
           'one',
-          0
+          0.15
         ),
         moveOldArrToNewArr(
           this.secondUserCardsShuffled,
           this.secondUserCardsBindedView,
           'two',
-          0
+          0.15
         ),
         moveOldArrToNewArr(
           this.myselfUserCardsShuffled,
           this.myselfUserCardsBindedView,
           'myself',
-          0.1
+          0.05
         ),
       ]);
     },

@@ -242,7 +242,7 @@ button:active {
 }
 .card--u1,
 .card--u2 {
-  background-image: url(../asset/image/card-backface.webp);
+  /* background-image: url(../asset/image/card-backface.webp); */
   width: 65px;
   height: 100px;
   overflow: hidden;
@@ -252,11 +252,13 @@ button:active {
   transform-origin: left top;
   transform: scale(0.45);
   /* 注意：对家的卡牌数字完全公开，只是颜色设成了透明 */
-  color: transparent !important;
+  /* color: transparent !important; */
+  color: black;
 }
 .card--u1::before,
 .card--u2::before {
-  color: transparent !important;
+  /* color: transparent !important; */
+  color: black;
 }
 .card--u1:not(:first-child),
 .card--u2:not(:first-child) {

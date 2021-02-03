@@ -155,15 +155,21 @@ export const isBiggerThanDesktopCards = (
   }
 };
 export const hasCardsBiggerThanDesktop = (playerCards, desktopCardsInfo) => {
-  function hasMatchType(desktopCardsInfo) {
+  function hasMatchType(playerCards, desktopCardsInfo) {
     if (desktopCardsInfo.type === cardsRules.SINGLE) {
+      // console.log('hasCardsBiggerThanDesktop函数：');
+    }
+    if (desktopCardsInfo.type === cardsRules.DOUBLE) {
       let res = {};
       for (let card of playerCards) {
         res[card] = res[card] ? res[card] + 1 : 1;
       }
-      console.log('hasCardsBiggerThanDesktop函数：');
-    }
-    if (desktopCardsInfo.type === cardsRules.DOUBLE) {
+      let countEqual2 = [];
+      for (let number in res) {
+        if (res[number] === 2) countEqual2.push(number);
+      }
+      countEqual2 = countEqual2.map(v => parseInt(v)).sort((a, b) => b - a);
+      console.log(`数量等于2的牌：${countEqual2}`);
     }
     if (desktopCardsInfo.type === cardsRules.TRIPLE) {
     }
@@ -190,7 +196,8 @@ export const hasCardsBiggerThanDesktop = (playerCards, desktopCardsInfo) => {
     if (desktopCardsInfo.type === cardsRules.BIG_BOMB) {
     }
   }
-  console.log(desktopCardsInfo);
+  console.log('进入hasCardsBiggerThanDesktop函数');
+  hasMatchType(playerCards, desktopCardsInfo);
 };
 
 export const getCardsTypeAndMainItems = cards => {
