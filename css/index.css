@@ -28,55 +28,50 @@
   background-position: center;
 }
 .clock {
-  width: 150px;
-  height: 150px;
-  /* overflow: hidden; */
   z-index: 9999;
-  position: absolute;
-  transition: all 0.5s ease;
-  left: auto;
-  top: auto;
-  right: auto;
-  bottom: auto;
-  backdrop-filter: blur(3px) brightness(1.05);
+  pointer-events: none;
+  transition: 0.5s ease;
   transform: translate(-50%, -50%);
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: center;
-  align-items: center;
-  filter: drop-shadow(8px 10px 15px #080c0c);
 
-  border-radius: 50%;
-  background-image: conic-gradient(
-    rgba(255, 0, 0, 0.493),
-    hsla(315, 100%, 50%, 0.493),
-    hsla(270, 100%, 50%, 0.432),
-    hsla(225, 100%, 50%, 0.507),
-    hsla(180, 100%, 50%, 0.418),
-    hsla(135, 100%, 50%, 0.452),
-    hsla(90, 100%, 50%, 0.432),
-    hsla(45, 100%, 50%, 0.445),
-    hsla(0, 100%, 50%, 0.473)
+  padding: 8px;
+
+  display: grid;
+  place-items: center;
+
+  backdrop-filter: blur(3px);
+  position: absolute;
+
+  border-radius: 15px;
+  border: solid #bdbdbd 5px;
+  border-top: none;
+  border-bottom: none;
+  background-color: #4158d0;
+  background-image: linear-gradient(
+    43deg,
+    #4158d0 0%,
+    #c850c0 46%,
+    #ffcc70 100%
   );
-  color: white;
+  color: rgb(255, 255, 255);
+  font-size: 20px;
 }
 
 .clock--left {
   left: 20%;
-  top: 20%;
+  top: 35%;
   right: auto;
   bottom: auto;
 }
 .clock--right {
   right: 20%;
-  top: 20%;
+  top: 35%;
 
   left: auto;
   bottom: auto;
 }
 .clock--myself {
-  top: 50%;
-  left: 50%;
+  top: 65%;
+  left: 30%;
 
   right: auto;
   bottom: auto;

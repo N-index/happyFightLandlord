@@ -71,6 +71,7 @@ const app = new Vue({
       putUp: 20,
     },
     desktopCardsInfo: {
+      ownerIndex: -1,
       cards: [],
       type: {},
       mainItems: [],
@@ -82,7 +83,9 @@ const app = new Vue({
       clock: false,
       deliver: true,
       grabLordland: false,
-      putUpCards: false,
+      putUpGroup: false,
+      putUpCards: true,
+      notPutUpCards: true,
       countdownOfGrab: false,
       countdownOfPutUp: false,
     },
@@ -146,6 +149,10 @@ const app = new Vue({
       this.displayStatus.countdownOfPutUp = false;
       // 抢地主
       await this.grabLandlord();
+      console.log(
+        `抢完地主，索引是${this.grabLandlordInfo.landlordPlayerIndex}`
+      );
+      this.desktopCardsInfo.ownerIndex = this.grabLandlordInfo.landlordPlayerIndex;
       this.displayStatus.countdownOfPutUp = true;
       this.displayStatus.countdownOfGrab = false;
       // 发地主牌
@@ -180,18 +187,17 @@ const app = new Vue({
             this.countdownPutUp(),
           ]);
         } catch (err) {
-          console.error(err);
         } finally {
-          console.log('---进入下一轮---');
+          console.log('\n\n🔵🔵🔵进入下一轮🔵🔵🔵');
 
           await waiting(1);
           playerIndex = (playerIndex + 1) % 3;
         }
       }
-      console.log('出牌完毕！');
     },
     resetGame() {
       this.desktopCardsInfo = {
+        ownerIndex: -1,
         cards: [],
         type: {},
         mainItems: [],
@@ -222,9 +228,6 @@ const app = new Vue({
       this.firstUserCardsShuffled.sort((a, b) => b - a);
       this.secondUserCardsShuffled.sort((a, b) => b - a);
       this.myselfUserCardsShuffled.sort((a, b) => b - a);
-      console.log(this.firstUserCardsShuffled);
-      console.log(this.secondUserCardsShuffled);
-      console.log(this.myselfUserCardsShuffled);
     },
     async deliverCardsToPlayers() {
       //箭头函数中this会混乱，所以没用箭头
@@ -250,13 +253,11 @@ const app = new Vue({
       ]);
     },
     async countdownPutUp() {
-      console.log('出牌coutdown开始');
       this.countdownNumber.putUp = 20;
       while (this.countdownNumber.putUp > 0) {
         await waiting(1);
         this.countdownNumber.putUp--;
       }
-      console.log('出牌coutdown结束');
     },
     async countdownGrab() {
       this.countdownNumber.grab = 8;
@@ -277,7 +278,6 @@ const app = new Vue({
         await this.getGrabPromise(8);
       } catch (error) {
         // error = reject value = false;
-        console.log(error);
         this.grabLandlordInfo.grabIndexRecord.delete(playerIndex);
       } finally {
         // break the running of grab countdown
@@ -290,7 +290,7 @@ const app = new Vue({
     },
     async getPutUpResult(playerIndex) {
       this.displayStatus.clock = true;
-      this.displayStatus.putUpCards = true;
+      this.displayStatus.putUpGroup = true;
       this.displayStatus.controls = true;
       try {
         await this.getPutUpPromise(20, playerIndex);
@@ -300,7 +300,7 @@ const app = new Vue({
         // breaking the running of putup countdown
         this.countdownNumber.putUp = -1;
 
-        this.displayStatus.putUpCards = false;
+        this.displayStatus.putUpGroup = false;
         this.displayStatus.controls = false;
         this.displayStatus.clock = false;
       }
@@ -418,7 +418,6 @@ const app = new Vue({
           }
         }
       }
-      console.log('抢地主完毕');
     },
     deliverCardsToLandlord() {
       // 给地主发地主牌
@@ -448,7 +447,6 @@ const app = new Vue({
       });
     },
     getGrabPromise(rejectTime) {
-      // timeout 后自动 reject 的 promise
       const snatchElement = this.$refs['snatch-btn'];
       const notSnatchElement = this.$refs['not-snatch-btn'];
 
@@ -471,58 +469,82 @@ const app = new Vue({
       );
     },
     getPutUpPromise(rejectTime, playerIndex) {
-      const putUpBtn = this.$refs['put-up-btn'];
-      const notPutUpBtn = this.$refs['not-put-up-btn'];
+      // 此处可以确保当前玩家可以大过自己的牌。
+      if (this.desktopCardsInfo.ownerIndex === playerIndex) {
+        console.log('一轮出牌完毕后，桌牌所属者拥有初始发牌权。');
+        this.desktopCardsInfo.cards = [];
+        this.desktopCardsInfo.type = {};
+        this.desktopCardsInfo.mainItems = [];
+      }
 
-      putUpBtn.removeEventListener('click', this.temp.putUpFn);
-      notPutUpBtn.removeEventListener('click', this.temp.notPutUpFn);
-
+      // ——————————🔻🔻🔻电脑玩家的出牌 Promise🔻🔻🔻——————————
       if (this.putUpInfo.currentPutUpTurnIndex !== 1) {
         return new Promise(
           function (resolve, reject) {
-            // 机器人手中是否有比场上牌大的牌。
-            hasCardsBiggerThanDesktop(
-              [
-                this.firstUserCardsBindedView,
-                this.myselfUserCardsBindedView,
-                this.secondUserCardsBindedView,
-              ][this.putUpInfo.currentPutUpTurnIndex],
-              this.desktopCardsInfo
-            );
-            setTimeout(reject, 5000, new Error('测试，电脑自动不出牌'));
+            const isLeader = this.desktopCardsInfo.ownerIndex === playerIndex;
+            const setTimeoutFn = function () {
+              if (this.putUpCards(playerIndex, isLeader)) {
+                this.desktopCardsInfo.ownerIndex = playerIndex;
+                resolve(true);
+              } else {
+                reject(
+                  new Error('机器自动出牌，但是没牌打得过场上的牌。所以不出')
+                );
+              }
+            }.bind(this);
+            setTimeout(setTimeoutFn, 3000);
           }.bind(this)
         );
       }
+      // ——————————🔺🔺🔺电脑玩家的出牌 Promise🔺🔺🔺——————————
+
+      // ——————————🔻🔻🔻活体玩家的出牌 Promise🔻🔻🔻——————————
+      const putUpBtn = this.$refs['put-up-btn'];
+      const notPutUpBtn = this.$refs['not-put-up-btn'];
+
+      // 因为按钮是复用的，并没有每次都重新创建，所以需要删除并添加新的响应事件
+      putUpBtn.removeEventListener('click', this.temp.putUpFn);
+      notPutUpBtn.removeEventListener('click', this.temp.notPutUpFn);
+
       return new Promise(
         function (resolve, reject) {
           const putUpHandler = () => {
-            if (this.putUpCards(playerIndex)) {
-              // 出牌合规
-              console.log('牌合规');
+            if (this.putUpCards(playerIndex, false)) {
+              this.desktopCardsInfo.ownerIndex = playerIndex;
               resolve(true);
             } else {
-              console.error('牌不合规');
+              // 选择的牌不合规则，不比场上的牌大。
             }
           };
-          const notPutUpHandler = () => {
-            this.notPutUpCards();
-            reject(new Error('手动不出牌'));
-          };
+
+          // 若用户首发牌，则必须出牌
+          const isLeader = this.desktopCardsInfo.ownerIndex === playerIndex;
+          let notPutUpHandler;
+          if (isLeader) {
+            this.displayStatus.notPutUpCards = false;
+            notPutUpHandler = null;
+          } else {
+            notPutUpHandler = () => {
+              this.notPutUpCards(playerIndex, false);
+              reject(new Error('手动不出牌'));
+            };
+          }
 
           putUpBtn.addEventListener('click', putUpHandler);
           notPutUpBtn.addEventListener('click', notPutUpHandler);
           this.temp.putUpFn = putUpHandler;
           this.temp.notPutUpFn = notPutUpHandler;
-          setTimeout(
-            err => {
-              this.notPutUpCards();
-              reject(err);
-            },
-            rejectTime * 1000,
-            new Error('自动不出牌')
-          );
+
+          // 倒计时到期
+          setTimeout(msg => {
+            const isLeader = this.desktopCardsInfo.ownerIndex === playerIndex;
+            console.log(msg);
+            this.putUpCards(playerIndex, isLeader);
+            (isLeader ? resolve : reject)(isLeader);
+          }, rejectTime * 1000);
         }.bind(this)
       );
+      // ——————————🔺🔺🔺活体玩家的出牌 Promise🔺🔺🔺——————————
     },
     mousedownHandler(itemIndex, item) {
       this.cardsSelectionInfo.isStartSelecting = true;
@@ -579,62 +601,131 @@ const app = new Vue({
         }
       }
     },
-    putUpCards: function (playerIndex) {
-      console.log('-------');
-      console.log('进入到判断出牌逻辑函数');
-      console.log(`几号玩家？${playerIndex}`);
+    putUpCards: function (playerIndex, isLeader) {
+      console.log(`${playerIndex}号玩家开始选牌,isLeader为${isLeader}`);
+      let selectedCards;
 
-      const selectedCards = this.myselfUserCardsBindedView
-        .filter(item => item.isSelected)
-        .map(item => item.number);
+      if (playerIndex === 1) {
+        // ——————————🔻🔻🔻活体玩家选牌🔻🔻🔻——————————
+        if (isLeader) {
+          // 活体玩家首发牌
+          this.myselfUserCardsBindedView.forEach((value, index, array) => {
+            value.isSelected = index === array.length - 1 ? true : false;
+          });
+        }
+        selectedCards = this.myselfUserCardsBindedView
+          .filter(item => item.isSelected)
+          .map(item => item.number);
+        // ——————————🔺🔺🔺活体玩家选牌🔺🔺🔺——————————
+      } else {
+        // ——————————🔻🔻🔻电脑玩家选牌🔻🔻🔻——————————
+        // 电脑玩家自动出牌
+        if (isLeader) {
+          // 轮到机器人首发牌，选择最后一张牌
+          selectedCards = [
+            [
+              this.firstUserCardsBindedView,
+              this.myselfUserCardsBindedView,
+              this.secondUserCardsBindedView,
+            ][playerIndex].slice(-1)[0],
+          ];
+        } else {
+          // 轮到机器人压牌，找出所有合适大小的牌组
+          const suitableCardsArr = hasCardsBiggerThanDesktop(
+            [
+              this.firstUserCardsBindedView,
+              this.myselfUserCardsBindedView,
+              this.secondUserCardsBindedView,
+            ][this.putUpInfo.currentPutUpTurnIndex],
+            this.desktopCardsInfo
+          );
+          console.log(`所有的可行的牌组有：`);
+          console.log(suitableCardsArr);
+          if (!suitableCardsArr.length) {
+            return false;
+          }
+          selectedCards = suitableCardsArr[suitableCardsArr.length - 1];
+        }
+        // ——————————🔺🔺🔺电脑玩家选牌🔺🔺🔺——————————
+      }
+      console.log(`${playerIndex}号玩家选牌完毕：选牌是:`);
+      console.log(selectedCards);
+      if (!selectedCards.length) {
+        console.log('没选牌');
+        return false;
+      }
 
+      // 提取选牌的主要元素
       const selectedCardsInfo = getCardsTypeAndMainItems(selectedCards);
 
       if (selectedCardsInfo.type === cardsRules.INVALID) {
-        console.log('无效的牌组');
-        console.log('-----');
-
         return false;
       }
 
       if (!isBiggerThanDesktopCards(selectedCardsInfo, this.desktopCardsInfo)) {
-        console.log('牌没有大过上家');
-        console.log('-----');
+        console.log('选牌没有大过上家的，出牌失败');
         return false;
       }
 
-      // 这个代码块里是应该是原子操作。应该加锁。相当于转账操作。
-      // 出牌
+      // ——————————🔻🔻🔻选牌合规，更新桌面状态🔻🔻🔻——————————
+      console.log('选牌合规，出牌完毕，更新桌面状态');
+
+      // 出牌成功 这个代码块里是应该是原子操作。应该加锁。相当于转账操作。
       [
+        this.desktopCardsInfo.ownerIndex,
         this.desktopCardsInfo.cards,
         this.desktopCardsInfo.type,
         this.desktopCardsInfo.mainItems,
-      ] = [selectedCards, selectedCardsInfo.type, selectedCardsInfo.mainItems];
+      ] = [
+        playerIndex,
+        selectedCards,
+        selectedCardsInfo.type,
+        selectedCardsInfo.mainItems,
+      ];
+      // ——————————🔺🔺🔺选牌合规，更新桌面状态🔺🔺🔺——————————
 
       // 出牌
       // 方案1：把当前选中的牌全部删掉。
       // 可能问题：在极端情况下选中的牌与要出的符合规则的牌不同。
       // 解决方案：再判断一次选中牌与要出牌的一致性。不过暂时不考虑这点。
-      this.myselfUserCardsBindedView = this.myselfUserCardsBindedView.filter(
-        item => !item.isSelected
-      );
-      console.log('逻辑正确，出牌成功！');
-      console.log('-----');
+      // 为当前 player 出牌，TODO: 机器人出牌还没有设置。
+      if (playerIndex !== 1) {
+        // ——————————🔻🔻🔻电脑玩家出牌成功🔻🔻🔻——————————
+        selectedCards.forEach(item => {
+          [
+            this.firstUserCardsBindedView,
+            this.myselfUserCardsBindedView,
+            this.secondUserCardsBindedView,
+          ][playerIndex].splice(
+            [
+              this.firstUserCardsBindedView,
+              this.myselfUserCardsBindedView,
+              this.secondUserCardsBindedView,
+            ][playerIndex].indexOf(item),
+            1
+          );
+        });
+        // ——————————🔺🔺🔺电脑玩家出牌成功🔺🔺🔺——————————
+      } else {
+        // ——————————🔻🔻🔻活体玩家出牌成功🔻🔻🔻——————————
+        this.myselfUserCardsBindedView = this.myselfUserCardsBindedView.filter(
+          item => !item.isSelected
+        );
+        // ——————————🔺🔺🔺活体玩家出牌成功🔺🔺🔺——————————
+      }
 
       return true;
     },
-    notPutUpCards() {
-      // 清场
-      this.desktopCardsInfo = {
-        cards: [],
-        type: {},
-        mainItems: [],
-      };
-      this.myselfUserCardsBindedView.forEach((myCardItem, index, arr) => {
-        if (myCardItem.isSelected) {
-          myCardItem.isSelected = false;
-        }
-      });
+    notPutUpCards(playerIndex, timeout) {
+      console.log(`当前第${playerIndex}号玩家不出牌，timeout为${timeout}`);
+
+      if (playerIndex === 1) {
+        this.myselfUserCardsBindedView.forEach((myCardItem, index, arr) => {
+          if (myCardItem.isSelected) {
+            myCardItem.isSelected = false;
+          }
+        });
+      }
 
       // 播放声音
       // 按钮显隐

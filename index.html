@@ -52,10 +52,15 @@
         >
           不抢
         </button>
-        <button ref="put-up-btn" v-show="displayStatus.putUpCards">出牌</button>
-        <button ref="not-put-up-btn" v-show="displayStatus.putUpCards">
-          不出
-        </button>
+        <div ref="put-up-btn-group" v-show="displayStatus.putUpGroup">
+          <button ref="put-up-btn" v-show="displayStatus.putUpCards">
+            出牌
+          </button>
+          <button ref="not-put-up-btn" v-show="displayStatus.notPutUpCards">
+            不出
+          </button>
+        </div>
+
         <audio controls autoplay style="display: none">
           <source src="asset/music/bg.mp3" type="audio/mpeg" />
           Your browser does not support the audio element.
@@ -92,6 +97,9 @@
             ></div>
           </div>
           <div class="center__info">
+            <div class="debug-info" style="width: 300px">
+              {{desktopCardsInfo}}
+            </div>
             <div
               v-for="itemCard in desktopCardsInfo.cards"
               class="card card--desktop"
