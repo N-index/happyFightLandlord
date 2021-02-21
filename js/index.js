@@ -33,6 +33,13 @@ const moveOldArrToNewArr = async function (
 const app = new Vue({
   el: '#app',
   data: {
+    audio: {
+      bg: new Audio('./asset/music/bg.mp3'),
+      clickButton: new Audio('./asset/music/bubble.mp3'),
+      putCards: new Audio('./asset/music/putUpCards.mp3'),
+      success: new Audio('./asset/music/success.mp3'),
+      fail: new Audio('./asset/music/fail.mp3'),
+    },
     username: 'Joker!',
     shuffledCards: [],
 
@@ -46,6 +53,7 @@ const app = new Vue({
     secondUserCardsBindedView: [],
 
     player: ['user-left', 'myself', 'user-right'],
+    winnerIndex: -1,
     grabLandlordInfo: {
       currentGrabTurnIndex: -1,
 
@@ -77,6 +85,7 @@ const app = new Vue({
       mainItems: [],
     },
     displayStatus: {
+      isRotate: true,
       welcome: true,
       stage: false,
       controls: false,
@@ -88,6 +97,7 @@ const app = new Vue({
       notPutUpCards: true,
       countdownOfGrab: false,
       countdownOfPutUp: false,
+      result: false,
     },
     gameStatus: [
       'beforeBeginning',
@@ -112,6 +122,7 @@ const app = new Vue({
     },
   },
   created() {
+    // 随机开始抢地主
     this.grabLandlordInfo.firstGrabPlayerIndex = Math.floor(Math.random() * 3);
     this.grabLandlordInfo.secondGrabPlayerIndex =
       (this.grabLandlordInfo.firstGrabPlayerIndex + 1) % 3;
@@ -126,6 +137,17 @@ const app = new Vue({
     ]);
   },
   methods: {
+    bubble() {
+      this.audio.clickButton.play();
+    },
+    toggleBgMusic() {
+      this.displayStatus.isRotate = !this.displayStatus.isRotate;
+      if (this.audio.bg.paused) {
+        this.audio.bg.play();
+      } else {
+        this.audio.bg.pause();
+      }
+    },
     enterStage() {
       // 按钮和舞台显隐
       this.displayStatus.welcome = false;
@@ -134,8 +156,13 @@ const app = new Vue({
     },
     async startGame() {
       // 按钮显隐
+      this.displayStatus.result = false;
       this.displayStatus.controls = false;
       this.displayStatus.deliver = false;
+
+      // 音乐开始
+      // this.audio.bg.currentTime = 1.5;
+      // this.audio.bg.play();
 
       // 重置舞台
       this.resetGame();
@@ -149,9 +176,7 @@ const app = new Vue({
       this.displayStatus.countdownOfPutUp = false;
       // 抢地主
       await this.grabLandlord();
-      console.log(
-        `抢完地主，索引是${this.grabLandlordInfo.landlordPlayerIndex}`
-      );
+
       this.desktopCardsInfo.ownerIndex = this.grabLandlordInfo.landlordPlayerIndex;
       this.displayStatus.countdownOfPutUp = true;
       this.displayStatus.countdownOfGrab = false;
@@ -160,6 +185,24 @@ const app = new Vue({
 
       // 出牌
       await this.startPutUp();
+
+      // 停止播放背景音乐
+      this.audio.bg.pause();
+      this.audio.bg.currentTime = 0;
+
+      this.gameOver();
+    },
+    gameOver() {
+      // 逻辑
+      this.winnerIndex = this.putUpInfo.currentPutUpTurnIndex;
+      // 显示
+      this.displayStatus.result = true;
+      // 音效
+      if (this.winnerIndex === 1) {
+        this.audio.success.play();
+      } else {
+        this.audio.fail.play();
+      }
     },
     async startPutUp() {
       // 确定出牌顺序
@@ -289,12 +332,18 @@ const app = new Vue({
       }
     },
     async getPutUpResult(playerIndex) {
+      if (playerIndex === 1) {
+        this.displayStatus.putUpGroup = true;
+        this.displayStatus.controls = true;
+      }
       this.displayStatus.clock = true;
-      this.displayStatus.putUpGroup = true;
-      this.displayStatus.controls = true;
+
       try {
         await this.getPutUpPromise(20, playerIndex);
+        // 出牌成功的音效
+        this.audio.putCards.play();
       } catch (err) {
+        // 不出的音效
         console.error(err);
       } finally {
         // breaking the running of putup countdown
@@ -508,9 +557,23 @@ const app = new Vue({
 
       return new Promise(
         function (resolve, reject) {
+          const setTimeoutFn = () => {
+            console.log('玩家的setTimeout函数到期，调用函数');
+            const isLeader = this.desktopCardsInfo.ownerIndex === playerIndex;
+            // 这种写法中传给this.putUpCards的参数一定是true，传给this.notPutUpCards的一定是false
+            // 我在怀疑，是不是因为我函数接口写的太烂了，才造成能产生这种写法的局面。
+            // 奇怪的设计导致奇怪的写法
+            (isLeader ? this.putUpCards : this.notPutUpCards)(
+              playerIndex,
+              isLeader
+            );
+            // 这种写法也是让我眼前一亮，在重构中，可能奇怪的状况会多次出现
+            (isLeader ? resolve : reject)(isLeader);
+          };
           const putUpHandler = () => {
             if (this.putUpCards(playerIndex, false)) {
               this.desktopCardsInfo.ownerIndex = playerIndex;
+              clearTimeout(setTimeoutFn);
               resolve(true);
             } else {
               // 选择的牌不合规则，不比场上的牌大。
@@ -522,11 +585,15 @@ const app = new Vue({
           let notPutUpHandler;
           if (isLeader) {
             this.displayStatus.notPutUpCards = false;
-            notPutUpHandler = null;
+            notPutUpHandler = () => {
+              clearTimeout(setTimeoutFn);
+            };
           } else {
+            this.displayStatus.notPutUpCards = true;
             notPutUpHandler = () => {
               this.notPutUpCards(playerIndex, false);
               reject(new Error('手动不出牌'));
+              clearTimeout(setTimeoutFn);
             };
           }
 
@@ -535,13 +602,7 @@ const app = new Vue({
           this.temp.putUpFn = putUpHandler;
           this.temp.notPutUpFn = notPutUpHandler;
 
-          // 倒计时到期
-          setTimeout(msg => {
-            const isLeader = this.desktopCardsInfo.ownerIndex === playerIndex;
-            console.log(msg);
-            this.putUpCards(playerIndex, isLeader);
-            (isLeader ? resolve : reject)(isLeader);
-          }, rejectTime * 1000);
+          setTimeout(setTimeoutFn, rejectTime * 1000);
         }.bind(this)
       );
       // ——————————🔺🔺🔺活体玩家的出牌 Promise🔺🔺🔺——————————
@@ -644,6 +705,7 @@ const app = new Vue({
           if (!suitableCardsArr.length) {
             return false;
           }
+          // 选择可行的牌中最小的
           selectedCards = suitableCardsArr[suitableCardsArr.length - 1];
         }
         // ——————————🔺🔺🔺电脑玩家选牌🔺🔺🔺——————————
@@ -655,7 +717,7 @@ const app = new Vue({
         return false;
       }
 
-      // 提取选牌的主要元素
+      //
       const selectedCardsInfo = getCardsTypeAndMainItems(selectedCards);
 
       if (selectedCardsInfo.type === cardsRules.INVALID) {

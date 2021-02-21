@@ -12,6 +12,33 @@
 }
 #app {
 }
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.paused {
+  /* 因为下面的animation属性是全写，所以为了覆盖状态， 需要important一下 */
+  -webkit-animation-play-state: paused !important;
+  -moz-animation-play-state: paused !important;
+  -o-animation-play-state: paused !important;
+  animation-play-state: paused !important;
+}
+.bg-music-btn {
+  position: absolute;
+  right: 40px;
+  top: 40px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #fff;
+  cursor: pointer;
+  animation: rotate 3s linear infinite;
+}
+
 #welcome {
   height: 100vh;
   display: flex;
@@ -26,6 +53,46 @@
     url(../asset/image/bg.png);
   background-size: cover;
   background-position: center;
+}
+@keyframes popin {
+  0% {
+    visibility: hidden;
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+#result {
+  animation: popin 0.8s;
+
+  z-index: 10000;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #4158d0;
+  padding: 60px;
+  clip-path: polygon(
+    85% 6%,
+    70% 15%,
+    30% 15%,
+    15% 5%,
+    0% 25%,
+    10% 45%,
+    10% 75%,
+    25% 90%,
+    40% 95%,
+    60% 95%,
+    75% 91%,
+    90% 75%,
+    90% 45%,
+    100% 25%
+  );
 }
 .clock {
   z-index: 9999;
