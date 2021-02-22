@@ -21,8 +21,10 @@
       </div>
 
       <div id="result" v-if="displayStatus.result">
-        <h2>你{{this.winnerInder===1?'赢了，牛逼！':'输了'}}</h2>
-        <button @click="startGame();bubble()">再来一局</button>
+        <h2>你{{this.winnerIndex===1?'赢了。牛逼！':'输了。很遗憾'}}</h2>
+        <button @click="startGame();bubble()" style="box-shadow: none">
+          再来一局
+        </button>
       </div>
 
       <svg

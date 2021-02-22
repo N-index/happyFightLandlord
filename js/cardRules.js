@@ -1,89 +1,112 @@
 export const cardsRules = {
   INVALID: {
     id: 0,
+    limit: -1,
+    audioFileName: '',
     description: '无效的牌',
     example: '876, 9998877',
   },
   BIG_BOMB: {
     id: 1,
+    limit: -1,
+    audioFileName: 'bigBomb',
     description: '王炸',
     example: '对王(唯一code: 99 100)',
   },
   NORMAL_BOMB: {
     id: 2,
     limit: 4,
+    audioFileName: 'normalBomb',
     description: '四张(炸弹)',
-    example: '尖炸(code: 14 14 14)',
+    example: '尖炸(code: 14 14 14 14)',
   },
   SINGLE: {
     id: 3,
     limit: 1,
+    audioFileName: 'singleCard/',
     description: '单张',
     example: '[ J (code:11),  2(code:80) ]',
   },
   DOUBLE: {
     id: 4,
     limit: 2,
+    audioFileName: 'doubleCards/',
     description: '对张',
     example: '对8(code: 80 80)',
   },
   TRIPLE: {
     id: 5,
     limit: 3,
+    audioFileName: 'default',
     description: '三张(单纯三张)',
     example: '3个7(code: 7 7 7 )',
   },
   THREE_PULL_ONE: {
     id: 6,
     limit: 3,
+    audioFileName: 'default',
+
     description: '三带一',
     example: '5带3(code: 5 5 5 3)',
   },
   THREE_PULL_TWO: {
     id: 7,
     limit: 3,
+    audioFileName: 'default',
+
     description: '三带二',
     example: '八带对九(code: 8 8 8 9 9)',
   },
   FOUR_PULL_TWO_SINGLE: {
     id: 8,
     limit: 4,
+    audioFileName: 'default',
+
     description: '四带两个单(不算炸弹)',
     example: '四个4带个8和Q(code: 4 4 4 4 8 12)',
   },
   FOUR_PULL_TWO_DOUBLE: {
     id: 9,
     limit: 4,
+    audioFileName: 'default',
+
     description: '四带两个对(不算炸弹)',
     example: '四个5带对4和对3',
   },
   SINGLE_BELT: {
     id: 10,
     limit: 1,
+    audioFileName: 'singleBelt',
     description: '单连牌(长度>=5)',
     example: '顺子4-10(code: 4 5 6 7 8 9 10)',
   },
   DOUBLE_BELT: {
     id: 11,
     limit: 2,
+    audioFileName: 'doubleBelt',
     description: '连对(长度>=6)',
     example: 'J-K连对(code: 11 11 12 12 13 13)',
   },
   TRIPLE_BELT: {
     id: 12,
     limit: 3,
+    audioFileName: 'default',
     description: '三顺(长度>=6)',
     example: '444555(code: 4 4 4 5 5 5)',
   },
   AIRPLANE_PULL_SINGLE: {
     id: 13,
     limit: 3,
+    audioFileName: 'airplane',
+
     description: '飞机带翅膀(single)',
     example: '77788846(code: 7 7 7 8 8 8 4 6)',
   },
   AIRPLANE_PULL_DOUBLE: {
     id: 14,
     limit: 3,
+    audioFileName: 'airplane',
+
     description: '飞机带翅膀(double)',
     example: '77788846(code: 7 7 7 8 8 8 4 4 6 6)',
   },

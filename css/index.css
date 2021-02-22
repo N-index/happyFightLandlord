@@ -37,6 +37,7 @@
   background-color: #fff;
   cursor: pointer;
   animation: rotate 3s linear infinite;
+  box-shadow: 0 0 16px 4px rgba(0, 0, 0, 0.2);
 }
 
 #welcome {
@@ -68,14 +69,23 @@
 }
 
 #result {
+  border-radius: 180px;
+  text-align: center;
   animation: popin 0.8s;
-
+  color: whitesmoke;
   z-index: 10000;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: #4158d0;
+  background-image: linear-gradient(
+    43deg,
+    #4158d0 0%,
+    #c850c0 46%,
+    #ffcc70 100%
+  );
+
   padding: 60px;
   clip-path: polygon(
     85% 6%,

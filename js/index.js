@@ -26,6 +26,7 @@ const moveOldArrToNewArr = async function (
         ? { number: oldArr[i], isSelected: false, isSelecting: false }
         : oldArr[i]
     );
+    new Audio('./asset/music/putUpCards.mp3').play();
   }
   return identifier;
 };
@@ -279,19 +280,19 @@ const app = new Vue({
           this.firstUserCardsShuffled,
           this.firstUserCardsBindedView,
           'one',
-          0.15
+          0.3
         ),
         moveOldArrToNewArr(
           this.secondUserCardsShuffled,
           this.secondUserCardsBindedView,
           'two',
-          0.15
+          0.3
         ),
         moveOldArrToNewArr(
           this.myselfUserCardsShuffled,
           this.myselfUserCardsBindedView,
           'myself',
-          0.05
+          0.3
         ),
       ]);
     },
@@ -520,7 +521,7 @@ const app = new Vue({
     getPutUpPromise(rejectTime, playerIndex) {
       // 此处可以确保当前玩家可以大过自己的牌。
       if (this.desktopCardsInfo.ownerIndex === playerIndex) {
-        console.log('一轮出牌完毕后，桌牌所属者拥有初始发牌权。');
+        // 一轮出牌完毕后，桌牌所属者拥有初始发牌权。
         this.desktopCardsInfo.cards = [];
         this.desktopCardsInfo.type = {};
         this.desktopCardsInfo.mainItems = [];
@@ -562,12 +563,10 @@ const app = new Vue({
             const isLeader = this.desktopCardsInfo.ownerIndex === playerIndex;
             // 这种写法中传给this.putUpCards的参数一定是true，传给this.notPutUpCards的一定是false
             // 我在怀疑，是不是因为我函数接口写的太烂了，才造成能产生这种写法的局面。
-            // 奇怪的设计导致奇怪的写法
             (isLeader ? this.putUpCards : this.notPutUpCards)(
               playerIndex,
               isLeader
             );
-            // 这种写法也是让我眼前一亮，在重构中，可能奇怪的状况会多次出现
             (isLeader ? resolve : reject)(isLeader);
           };
           const putUpHandler = () => {
@@ -710,14 +709,11 @@ const app = new Vue({
         }
         // ——————————🔺🔺🔺电脑玩家选牌🔺🔺🔺——————————
       }
-      console.log(`${playerIndex}号玩家选牌完毕：选牌是:`);
-      console.log(selectedCards);
+
       if (!selectedCards.length) {
-        console.log('没选牌');
         return false;
       }
 
-      //
       const selectedCardsInfo = getCardsTypeAndMainItems(selectedCards);
 
       if (selectedCardsInfo.type === cardsRules.INVALID) {
@@ -725,14 +721,43 @@ const app = new Vue({
       }
 
       if (!isBiggerThanDesktopCards(selectedCardsInfo, this.desktopCardsInfo)) {
-        console.log('选牌没有大过上家的，出牌失败');
+        console.error('选牌没有大过上家');
         return false;
       }
 
       // ——————————🔻🔻🔻选牌合规，更新桌面状态🔻🔻🔻——————————
-      console.log('选牌合规，出牌完毕，更新桌面状态');
+      // TODO: 需要将以下出牌和更新桌面状态的逻辑独立出当前函数
 
-      // 出牌成功 这个代码块里是应该是原子操作。应该加锁。相当于转账操作。
+      // 单张牌的音效
+      let fileName = 'default';
+      if (
+        [
+          cardsRules.TRIPLE,
+          cardsRules.SINGLE_BELT,
+          cardsRules.DOUBLE_BELT,
+          cardsRules.TRIPLE_BELT,
+          cardsRules.AIRPLANE_PULL_DOUBLE,
+          cardsRules.AIRPLANE_PULL_DOUBLE,
+          cardsRules.NORMAL_BOMB,
+          cardsRules.BIG_BOMB,
+        ].includes(selectedCardsInfo.type)
+      ) {
+        fileName = selectedCardsInfo.type.audioFileName;
+        // 暂无特殊配音
+      }
+      if (selectedCardsInfo.type === cardsRules.SINGLE) {
+        fileName = `singleCard/${selectedCardsInfo.mainItems[0]}`;
+      }
+      if (selectedCardsInfo.type === cardsRules.DOUBLE) {
+        fileName = `doubleCards/${selectedCardsInfo.mainItems[0]}`;
+      }
+
+      const src = `./asset/music/cards/${fileName}.mp3`;
+
+      const cardsAudio = new Audio(src);
+      cardsAudio.volume = 1;
+      cardsAudio.play();
+
       [
         this.desktopCardsInfo.ownerIndex,
         this.desktopCardsInfo.cards,
@@ -746,11 +771,6 @@ const app = new Vue({
       ];
       // ——————————🔺🔺🔺选牌合规，更新桌面状态🔺🔺🔺——————————
 
-      // 出牌
-      // 方案1：把当前选中的牌全部删掉。
-      // 可能问题：在极端情况下选中的牌与要出的符合规则的牌不同。
-      // 解决方案：再判断一次选中牌与要出牌的一致性。不过暂时不考虑这点。
-      // 为当前 player 出牌，TODO: 机器人出牌还没有设置。
       if (playerIndex !== 1) {
         // ——————————🔻🔻🔻电脑玩家出牌成功🔻🔻🔻——————————
         selectedCards.forEach(item => {
