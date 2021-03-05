@@ -4,12 +4,19 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "live-server": "^1.2.1"
+    "html-minifier": "^4.0.0",
+    "live-server": "^1.2.1",
+    "npm-run-all": "^4.1.5",
+    "uglify-js": "^3.13.0"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "all":"live-server"
+    "compress:html": "html-minifier --collapse-whitespace --remove-comments --remove-optional-tags --remove-redundant-attributes --remove-script-type-attributes --remove-tag-whitespace --use-short-doctype --minify-css true --minify-js true index.html -o index.mini.html",
+    "compress:index.js":"uglifyjs  js/index.js --compress --mangle -o js/index.mini.js",
+    "compress:allCardNumbers.js":"uglifyjs  js/allCardNumbers.js --compress --mangle -o js/allCardNumbers.mini.js",
+    "compress:cardRules.js":"uglifyjs  js/cardRules.js --compress --mangle -o js/cardRules.mini.js",
+    "build": "npm-run-all --parallel compress:html compress:index.js compress:allCardNumbers.js compress:cardRules.js",
+    "start": "live-server --host=127.0.0.1 --port=80"
   },
   "author": "zjx",
   "license": "MIT"
