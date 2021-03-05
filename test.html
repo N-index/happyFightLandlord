@@ -1,0 +1,35 @@
+<!DOCTYPE >
+<html>
+  <body>
+    <ol id="todo-list">
+      <span>{{prefixMsg}}</span>
+      <todo-item v-for="todo in todos" :todo="todo" @click="showMsg">
+      </todo-item>
+    </ol>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+      const appConfig = {
+        data() {
+          return {
+            prefixMsg: '前置信息',
+            todos: [{ text: 'todo item1' }, { text: 'todo item2' }],
+          };
+        },
+        methods: {
+          showMsg() {
+            alert('点击列表整体显示信息');
+          },
+        },
+      };
+
+      const todoListApp = Vue.createApp(appConfig);
+      todoListApp.component('todo-item', {
+        template: '<li>{{todo.text}}</li>',
+        props: ['todo'],
+      });
+      console.log(todoListApp);
+      const vm = todoListApp.mount('#todo-list');
+    </script>
+  </body>
+</html>

@@ -20,13 +20,15 @@ const moveOldArrToNewArr = async function (
   let len = oldArr.length;
   for (let i = 0; i < len; i++) {
     await waiting(duration);
-    // 对不起，这本来是一个通用的工具类函数，但是为了在其他地方改会有点麻烦，所以就为myself定制化一下吧。。
+    // 这本来是一个通用的工具类函数，但是为了在其他地方改会有点麻烦，所以就为myself定制化一下吧。。
     newArr.push(
       identifier == 'myself'
         ? { number: oldArr[i], isSelected: false, isSelecting: false }
         : oldArr[i]
     );
-    new Audio('./asset/music/putUpCards.mp3').play();
+    if (identifier === 'myself') {
+      new Audio('./asset/music/putUpCards.mp3').play();
+    }
   }
   return identifier;
 };
